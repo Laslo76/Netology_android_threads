@@ -51,6 +51,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(libs.maps)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -66,8 +67,8 @@ dependencies {
     implementation(libs.play.services)
     implementation(libs.okhttp)
     coreLibraryDesugaring(libs.desugaring)
-    //implementation(libs.glide)
-    //implementation(libs.androidx.exifinterface)
+    implementation(libs.glide)
+    implementation(libs.androidx.exifinterface)
     //annotationProcessor(libs.compiler)
     //implementation("com.squareup.picasso:picasso:2.8")
     //implementation(libs.coil)

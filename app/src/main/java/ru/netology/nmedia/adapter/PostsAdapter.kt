@@ -2,7 +2,7 @@ package ru.netology.nmedia.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-
+import com.bumptech.glide.Glide
 import android.widget.PopupMenu
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -48,12 +48,12 @@ class PostViewHolder(
             like.text = "${post.likes}"
 
             val url = "http://10.0.2.2:9999/avatars/${post.authorAvatar}"
-//            avatar.load(url) { // Просто вызываем .load() у ImageView
-//              placeholder(R.drawable.ic_loading_100dp) // Заглушка
-//                error(R.drawable.ic_error_100dp) // Изображение ошибки
-//                crossfade(true) // Плавный переход (опционально, но красиво)
-            // timeout(10_000) - Таймаут по умолчанию 15 секунд, можно не указывать
-//            }
+            Glide.with(binding.avatar)
+                .load(url)
+                .placeholder(R.drawable.ic_loading_100dp)
+                .error(R.drawable.ic_error_100dp)
+                .timeout(10_000)
+                .into(binding.avatar)
 
             menu.setOnClickListener {
                 PopupMenu(it.context, it).apply {
@@ -97,5 +97,3 @@ class PostViewHolder(
         }
     }
 }
-
-
