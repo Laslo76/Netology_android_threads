@@ -1,4 +1,4 @@
-package ru.netology.nmedia.repository
+package ru.netology.nmedia.repository.PostRepository
 
 import androidx.lifecycle.LiveData
 import ru.netology.nmedia.dto.Post

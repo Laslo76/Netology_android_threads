@@ -9,7 +9,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import ru.netology.nmedia.dto.Post
 import java.util.concurrent.TimeUnit
-
+import ru.netology.nmedia.repository.PostRepository.PostRepository
 
 class PostRepositoryImpl: PostRepository {
     private val client = OkHttpClient.Builder()
@@ -77,3 +77,4 @@ class PostRepositoryImpl: PostRepository {
             .close()
     }
 }
+
