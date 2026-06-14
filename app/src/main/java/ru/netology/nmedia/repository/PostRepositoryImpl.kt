@@ -1,80 +1,85 @@
 package ru.netology.nmedia.repository
 
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import okhttp3.FormBody
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
+
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import ru.netology.nmedia.api.PostApi
 import ru.netology.nmedia.dto.Post
-import java.util.concurrent.TimeUnit
 import ru.netology.nmedia.repository.PostRepository.PostRepository
+import java.io.IOException
+
 
 class PostRepositoryImpl: PostRepository {
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .build()
-    private val gson = Gson()
-    private val typeToken = object : TypeToken<List<Post>>() {}
-
-    companion object {
-        private const val BASE_URL = "http://10.0.2.2:9999"
-        private val jsonType = "application/json".toMediaType()
-    }
-
     override fun getAll(): List<Post> {
-        val request: Request = Request.Builder()
-            .url("${BASE_URL}/api/slow/posts")
-            .build()
-
-        return client.newCall(request)
+        return PostApi.service.getAll()
             .execute()
-            .let { it.body?.string() ?: throw RuntimeException("body is null") }
-            .let {
-                gson.fromJson(it, typeToken.type)
+            .body()
+            .orEmpty()
+    }
+
+    override fun getAllAsync(callback: PostRepository.Callback<List<Post>>) {
+        PostApi.service.getAll()
+            .enqueue(object : Callback<List<Post>> {
+                override fun onResponse(
+                    call: Call<List<Post>>,
+                    response: Response<List<Post>>
+                ) {
+                    if (response.isSuccessful) {
+                        val body = response.body() ?: run {
+                            callback.onError(RuntimeException("Body is empty"))
+                        }
+                        callback.onSuccess(body as List<Post>)
+                    }
+
+
+                }
+
+                override fun onFailure(
+                    call: Call<List<Post>>,
+                    t: Throwable)
+                {
+                    callback.onError(t)
+                }
+            })
+    }
+
+    override fun saveAsync(post: Post, callback: PostRepository.Callback<Post>) {
+        PostApi.service.save(post).enqueue(createRetrofitCallback(callback))
+    }
+
+    override fun removeByIdAsync(id: Long, callback: PostRepository.Callback<Unit>) {
+        PostApi.service.deleteById(id).enqueue(createRetrofitCallback(callback))
+    }
+
+    override fun likeByIdAsync(id: Long, callback: PostRepository.Callback<Unit>) {
+        PostApi.service.likeById(id).enqueue(createRetrofitCallback(callback))
+    }
+
+    override fun dislikeByIdAsync(id: Long, callback: PostRepository.Callback<Unit>) {
+        PostApi.service.dislikeById(id).enqueue(createRetrofitCallback(callback))
+    }
+
+    // Вспомогательная функция для избежания дублирования кода
+    private fun <T> createRetrofitCallback(callback: PostRepository.Callback<T>): retrofit2.Callback<T> {
+        return object : retrofit2.Callback<T> {
+            override fun onResponse(call: Call<T>, response: Response<T>) {
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body != null) {
+                        callback.onSuccess(body)
+                    } else {
+                        callback.onError(IOException("Пустой body в ответе"))
+                    }
+                } else {
+                    callback.onError(IOException("Ошибка сервера: ${response.code()}"))
+                }
             }
-    }
-
-    override fun likeById(id: Long, isLike: Boolean) {
-        var request: Request
-        if (isLike) {
-            request = Request.Builder()
-                .delete(FormBody.Builder().build())
-                .url("${BASE_URL}/api/slow/posts/${id}/likes")
-                .build()
-        } else {
-            request = Request.Builder()
-                .post(FormBody.Builder().build())
-                .url("${BASE_URL}/api/slow/posts/${id}/likes")
-                .build()
+            override fun onFailure(call: Call<T>, t: Throwable) {
+                callback.onError(t)
+            }
         }
-
-        client.newCall(request)
-            .execute()
-            .close()
-    }
-
-    override fun save(post: Post) {
-        val request: Request = Request.Builder()
-            .post(gson.toJson(post).toRequestBody(jsonType))
-            .url("${BASE_URL}/api/slow/posts")
-            .build()
-
-        client.newCall(request)
-            .execute()
-            .close()
-    }
-
-    override fun removeById(id: Long) {
-        val request: Request = Request.Builder()
-            .delete()
-            .url("${BASE_URL}/api/slow/posts/$id")
-            .build()
-
-        client.newCall(request)
-            .execute()
-            .close()
     }
 }
 
+private fun Call<Unit>.enqueue(p0: retrofit2.Callback<ru.netology.nmedia.dto.Post>) {}

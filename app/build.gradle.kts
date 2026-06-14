@@ -24,6 +24,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 
     buildTypes {
@@ -31,9 +32,11 @@ android {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             manifestPlaceholders["usesCleartextTraffic"] = false
+            buildConfigField("String", "BASE_URL", "\"https://netomedia.ru\"")
         }
         debug {
             manifestPlaceholders["usesCleartextTraffic"] = true
+            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:9999\"")
         }
     }
     compileOptions {
@@ -41,7 +44,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    buildToolsVersion = "30.0.2"
+
 }
 
 kotlin {
@@ -69,8 +72,7 @@ dependencies {
     coreLibraryDesugaring(libs.desugaring)
     implementation(libs.glide)
     implementation(libs.androidx.exifinterface)
-    //annotationProcessor(libs.compiler)
-    //implementation("com.squareup.picasso:picasso:2.8")
-    //implementation(libs.coil)
-    //implementation(libs.coil.view)
+
+    implementation(libs.converter.gson)
+    implementation(libs.logging.interceptor)
 }

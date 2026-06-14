@@ -2,9 +2,11 @@ package ru.netology.nmedia.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.*
+import kotlinx.coroutines.launch
 import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.model.FeedModel
 import ru.netology.nmedia.repository.*
+import ru.netology.nmedia.repository.PostRepository.PostRepository
 import ru.netology.nmedia.util.SingleLiveEvent
 import java.io.IOException
 import kotlin.concurrent.thread
@@ -30,36 +32,43 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     val postCreated: LiveData<Unit>
         get() = _postCreated
 
+    private val _postEdited = SingleLiveEvent<Post>()
+    val postEdited: LiveData<Post>
+        get() = _postEdited
+
+
     init {
         loadPosts()
     }
 
     fun loadPosts() {
-        thread {
-            // Начинаем загрузку
-            _data.postValue(FeedModel(loading = true))
-            try {
-                // Данные успешно получены
-                val posts = repository.getAll()
-                FeedModel(posts = posts, empty = posts.isEmpty())
-            } catch (e: IOException) {
-                // Получена ошибка
-                FeedModel(error = true)
-            }.also(_data::postValue)
-        }
+        _data.value = FeedModel(loading = true)
+        repository.getAllAsync(object : PostRepository.Callback<List<Post>> {
+            override fun onSuccess(posts: List<Post>) {
+                _data.value = FeedModel(posts = posts, empty = posts.isEmpty())
+            }
+
+            override fun onError(e: Throwable) {
+                _data.value = FeedModel(error = true)
+            }
+        })
     }
 
     fun save() {
         edited.value?.let {
-            thread {
-                repository.save(it)
-                _postCreated.postValue(Unit)
-            }
+            repository.saveAsync(it,object : PostRepository.Callback<Post> {
+                override fun onSuccess(posts: Post) {}
+                override fun onError(e: Throwable) {
+                    // Ошибка - откатываем изменения в UI
+                }
+            })
+            _postCreated.value = Unit
         }
         edited.value = empty
     }
 
     fun edit(post: Post) {
+        _postEdited.value = post
         edited.value = post
     }
 
@@ -87,30 +96,42 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         currentPosts[index] = newPost
         _data.postValue(currentState?.copy(posts = currentPosts))
 
-        // Отправляем запрос на сервер (оптимистично считаем, что он пройдет успешно)
-        try {
-            thread { repository.likeById(id, oldPost.likedByMe) }
-            // Если запрос успешен, интерфейс уже обновлен, ничего делать не нужно.
-        } catch (e: IOException) {
-            currentPosts[index] = oldPost // Возвращаем старый пост
-            _data.postValue(currentState?.copy(posts = currentPosts))
+        if (newPost.likedByMe) {
+            repository.likeByIdAsync(id, object : PostRepository.Callback<Unit> {
+                override fun onSuccess(posts: Unit) {}
+                override fun onError(e: Throwable) {
+                    // Ошибка - откатываем изменения в UI
+                    currentPosts[index] = oldPost
+                    _data.postValue(currentState?.copy(posts = currentPosts))
+                }
+            })
+        } else {
+            repository.dislikeByIdAsync(id, object : PostRepository.Callback<Unit> {
+                override fun onSuccess(posts: Unit) {}
+                override fun onError(e: Throwable) {
+                    // Ошибка - откатываем изменения в UI
+                    currentPosts[index] = oldPost
+                    _data.postValue(currentState?.copy(posts = currentPosts))
+                }
+            })
         }
     }
 
     fun removeById(id: Long) {
-        thread {
-            // Оптимистичная модель
-            val old = _data.value?.posts.orEmpty()
-            _data.postValue(
-                _data.value?.copy(posts = _data.value?.posts.orEmpty()
-                    .filter { it.id != id }
-                )
+        // Оптимистичная модель
+        val old = _data.value?.posts.orEmpty()
+        _data.postValue(
+        _data.value?.copy(posts = _data.value?.posts.orEmpty()
+                .filter { it.id != id }
             )
-            try {
-                repository.removeById(id)
-            } catch (e: IOException) {
+        )
+
+        repository.removeByIdAsync(id, object : PostRepository.Callback<Unit> {
+            override fun onSuccess(posts: Unit) {}
+            override fun onError(e: Throwable) {
+                // Ошибка - откатываем изменения в UI
                 _data.postValue(_data.value?.copy(posts = old))
             }
-        }
+        })
     }
 }
