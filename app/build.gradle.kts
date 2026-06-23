@@ -75,4 +75,6 @@ dependencies {
 
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
+    // Source: https://mvnrepository.com/artifact/androidx.swiperefreshlayout/swiperefreshlayout
+    implementation(libs.androidx.swiperefreshlayout)
 }
