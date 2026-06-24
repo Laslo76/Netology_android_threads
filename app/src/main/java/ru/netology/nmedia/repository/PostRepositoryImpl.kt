@@ -2,6 +2,7 @@ package ru.netology.nmedia.repository
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import okio.IOException
@@ -11,6 +12,7 @@ import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.entity.PostEntity
 import ru.netology.nmedia.entity.toEntity
 import ru.netology.nmedia.error.ApiError
+import ru.netology.nmedia.error.AppError
 import ru.netology.nmedia.error.NetworkError
 import ru.netology.nmedia.error.UnknownError
 
@@ -18,7 +20,7 @@ class PostRepositoryImpl(private val dao: PostDao): PostRepository {
     override val data = dao.getAll().map { it.map { it.toDto()}}
     override fun getNewer(id: Long): Flow<Int> = flow {
         while (true) {
-            delay(10000)
+            delay(10_000)
             val response = PostApi.service.getNewer(id)
             if (!response.isSuccessful) {
                 throw ApiError(response.code(), response.message())
@@ -28,7 +30,7 @@ class PostRepositoryImpl(private val dao: PostDao): PostRepository {
             dao.insert(body.toEntity())
             emit(body.size)
         }
-    }
+    }.catch { e -> throw AppError.from(e) }
 
     override suspend fun getById(id: Long) {
         try {
@@ -44,6 +46,11 @@ class PostRepositoryImpl(private val dao: PostDao): PostRepository {
         } catch (e: Exception) {
             throw UnknownError
         }
+    }
+
+    override suspend fun makeVisible()   {
+
+            dao.updateVisible()
     }
 
     override suspend fun getAll() {
@@ -105,7 +112,7 @@ class PostRepositoryImpl(private val dao: PostDao): PostRepository {
         val currentEntity = dao.getById(id) ?: throw Exception("Post not found in DB")
         val currentPost = currentEntity.toDto()
 
-        // 2. Решаем, какую операцию выполнить, на основе текущего состояния
+        // Решаем, какую операцию выполнить, на основе текущего состояния
         if (currentPost.likedByMe) {
             dislikeById(id)
         } else {
@@ -120,7 +127,7 @@ class PostRepositoryImpl(private val dao: PostDao): PostRepository {
         val updatedPost = currentPost.copy(likedByMe = true, likes = currentPost.likes + 1)
 
         try {
-            dao.insert(PostEntity.fromDto(updatedPost))
+            dao.insert(PostEntity.fromDto(updatedPost, true))
 
             val response = PostApi.service.likeById(id)
             if (!response.isSuccessful) {
@@ -147,7 +154,7 @@ class PostRepositoryImpl(private val dao: PostDao): PostRepository {
 
         try {
             // 3. Оптистично обновляем локальную БД
-            dao.insert(PostEntity.fromDto(updatedPost))
+            dao.insert(PostEntity.fromDto(updatedPost, true))
 
             // 4. Отправляем запрос на сервер
             val response = PostApi.service.dislikeById(id)

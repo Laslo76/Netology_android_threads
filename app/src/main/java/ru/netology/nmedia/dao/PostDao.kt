@@ -9,8 +9,14 @@ import ru.netology.nmedia.entity.PostEntity
 
 @Dao
 interface PostDao {
-    @Query("SELECT * FROM PostEntity ORDER BY id DESC")
+    @Query("SELECT * FROM PostEntity WHERE isVisible = 1 ORDER BY id DESC")
     fun getAll(): Flow<List<PostEntity>>
+
+    @Query("""UPDATE PostEntity 
+            SET isVisible = 1
+            WHERE isVisible = 0""")
+    fun updateVisible()
+
 
     @Query("SELECT * FROM PostEntity WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): PostEntity?
@@ -27,13 +33,14 @@ interface PostDao {
     @Query("UPDATE PostEntity SET content = :content WHERE id = :id")
     suspend fun updateContentById(id: Long, content: String)
 
-    suspend fun save(post: PostEntity) =
-        if (post.id == 0L) insert(post) else updateContentById(post.id, post.content)
+    //suspend fun save(post: PostEntity) =
+    //    if (post.id == 0L) insert(post) else updateContentById(post.id, post.content)
 
     @Query("""
         UPDATE PostEntity SET
         likes = likes + CASE WHEN likedByMe THEN -1 ELSE 1 END,
-        likedByMe = CASE WHEN likedByMe THEN 0 ELSE 1 END
+        likedByMe = CASE WHEN likedByMe THEN 0 ELSE 1 END,
+        isVisible = 1
         WHERE id = :id
         """)
     suspend fun likeById(id: Long)

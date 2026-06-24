@@ -37,6 +37,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     val newerCount = data.switchMap {
         repository.getNewer( it.posts.firstOrNull()?.id ?: 0)
+            .catch { _dataState.postValue(FeedModelState(error=true)) }
             .asLiveData(Dispatchers.Default)
     }
 
@@ -66,6 +67,16 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             _dataState.value = FeedModelState(loading = true)
             repository.getAll()
             _dataState.value = FeedModelState()
+        } catch (e: Exception) {
+            _dataState.value = FeedModelState(error = true)
+        }
+    }
+
+    fun makeVisible() = viewModelScope.launch {
+        try {
+            viewModelScope.launch(Dispatchers.IO) {
+                repository.makeVisible()
+            }
         } catch (e: Exception) {
             _dataState.value = FeedModelState(error = true)
         }
@@ -103,11 +114,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         //добавил
         edited.value = post.copy() // Создаем копию, чтобы не менять оригинал напрямую
         _isEditing.value = true
-
-    }
-
-    fun edit(post: Post) {
-        edited.value = post
     }
 
     fun changeContent(content: String) {

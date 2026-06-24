@@ -14,5 +14,5 @@ interface PostRepository {
     suspend fun dislikeById(id: Long)
 
     suspend fun getById(id: Long)
-
+    suspend fun makeVisible()
 }

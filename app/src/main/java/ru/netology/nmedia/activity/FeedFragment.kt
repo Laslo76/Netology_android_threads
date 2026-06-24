@@ -60,7 +60,8 @@ class FeedFragment : Fragment() {
             binding.swiperefresh.isRefreshing = state.refreshing
             if (state.error) {
                 Snackbar.make(binding.root, R.string.error_loading, Snackbar.LENGTH_LONG)
-                    .setAction(R.string.retry_loading) { viewModel.loadPosts() }
+                    .setAction(R.string.retry_loading) {
+                        viewModel.loadPosts() }
                     .show()
             }
         }
@@ -80,20 +81,19 @@ class FeedFragment : Fragment() {
                     "Новых сообщений $count",
                     Snackbar.LENGTH_LONG)
                     .setAction("Загрузить") {
-                        if (binding.list.adapter?.itemCount ?: 0 > 0) {
-                            binding.list.smoothScrollToPosition(0)
-                        }
+                        viewModel.makeVisible()
+                        binding.list.smoothScrollToPosition(0)
                     }
 
                 // Привязываем Snackbar к якорю в верхней части экрана
-                //snackbarTop.setAnchorView(anchorView)
+                snackbarTop.setAnchorView(anchorView)
                 snackbarTop.show()
             }
         }
 
-        //binding.swiperefresh.setOnClickListener {
-        //    viewModel.refreshPosts()
-        //}
+        binding.swiperefresh.setOnClickListener {
+            viewModel.refreshPosts()
+        }
 
         binding.fab.setOnClickListener {
             findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
