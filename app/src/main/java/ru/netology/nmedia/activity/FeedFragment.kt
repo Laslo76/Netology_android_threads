@@ -57,21 +57,43 @@ class FeedFragment : Fragment() {
         binding.list.adapter = adapter
         viewModel.dataState.observe(viewLifecycleOwner) { state ->
             binding.progress.isVisible = state.loading
-            binding.refresh.isRefreshing = state.refreshing
+            binding.swiperefresh.isRefreshing = state.refreshing
             if (state.error) {
                 Snackbar.make(binding.root, R.string.error_loading, Snackbar.LENGTH_LONG)
                     .setAction(R.string.retry_loading) { viewModel.loadPosts() }
                     .show()
             }
         }
+
         viewModel.data.observe(viewLifecycleOwner) { state ->
             adapter.submitList(state.posts)
             binding.emptyText.isVisible = state.empty
         }
 
-        binding.refresh.setOnClickListener {
-            viewModel.refreshPosts()
+        viewModel.newerCount.observe(viewLifecycleOwner) { count ->
+            if (count > 0) {
+                val coordinatorLayout = binding.root
+                val anchorView = binding.topSnackbarAnchor
+
+                val snackbarTop = Snackbar.make(
+                    coordinatorLayout,
+                    "Новых сообщений $count",
+                    Snackbar.LENGTH_LONG)
+                    .setAction("Загрузить") {
+                        if (binding.list.adapter?.itemCount ?: 0 > 0) {
+                            binding.list.smoothScrollToPosition(0)
+                        }
+                    }
+
+                // Привязываем Snackbar к якорю в верхней части экрана
+                //snackbarTop.setAnchorView(anchorView)
+                snackbarTop.show()
+            }
         }
+
+        //binding.swiperefresh.setOnClickListener {
+        //    viewModel.refreshPosts()
+        //}
 
         binding.fab.setOnClickListener {
             findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)

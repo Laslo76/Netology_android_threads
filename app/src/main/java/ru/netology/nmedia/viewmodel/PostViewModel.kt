@@ -2,13 +2,16 @@ package ru.netology.nmedia.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import ru.netology.nmedia.db.AppDb
 import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.model.FeedModel
 import ru.netology.nmedia.model.FeedModelState
 import ru.netology.nmedia.repository.*
-import ru.netology.nmedia.repository.PostRepository.PostRepository
+import ru.netology.nmedia.repository.PostRepository
 import ru.netology.nmedia.util.SingleLiveEvent
 
 
@@ -27,7 +30,15 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: PostRepository = PostRepositoryImpl (
         AppDb.getInstance(context = application).postDao()
     )
-    val data: LiveData<FeedModel> = repository.data.map(::FeedModel)
+    val data: LiveData<FeedModel> = repository.data
+        .map { FeedModel(it, it.isEmpty())}
+        .catch { it.printStackTrace() }
+        .asLiveData(Dispatchers.Default)
+
+    val newerCount = data.switchMap {
+        repository.getNewer( it.posts.firstOrNull()?.id ?: 0)
+            .asLiveData(Dispatchers.Default)
+    }
 
     private val _dataState = MutableLiveData<FeedModelState>()
 

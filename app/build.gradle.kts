@@ -54,6 +54,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(libs.androidx.coordinatorlayout)
     implementation(libs.maps)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -75,6 +76,7 @@ dependencies {
 
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
-    // Source: https://mvnrepository.com/artifact/androidx.swiperefreshlayout/swiperefreshlayout
+
     implementation(libs.androidx.swiperefreshlayout)
+
 }
