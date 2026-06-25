@@ -72,7 +72,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun makeVisible() = viewModelScope.launch {
+    fun makeVisible() {
         try {
             viewModelScope.launch(Dispatchers.IO) {
                 repository.makeVisible()

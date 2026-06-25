@@ -15,7 +15,7 @@ interface PostDao {
     @Query("""UPDATE PostEntity 
             SET isVisible = 1
             WHERE isVisible = 0""")
-    fun updateVisible()
+    suspend fun updateVisible()
 
 
     @Query("SELECT * FROM PostEntity WHERE id = :id LIMIT 1")

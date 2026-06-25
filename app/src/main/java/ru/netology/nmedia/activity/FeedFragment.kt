@@ -54,6 +54,7 @@ class FeedFragment : Fragment() {
                 startActivity(shareIntent)
             }
         })
+
         binding.list.adapter = adapter
         viewModel.dataState.observe(viewLifecycleOwner) { state ->
             binding.progress.isVisible = state.loading
@@ -64,11 +65,13 @@ class FeedFragment : Fragment() {
                         viewModel.loadPosts() }
                     .show()
             }
+
         }
 
         viewModel.data.observe(viewLifecycleOwner) { state ->
             adapter.submitList(state.posts)
             binding.emptyText.isVisible = state.empty
+            
         }
 
         viewModel.newerCount.observe(viewLifecycleOwner) { count ->
@@ -82,6 +85,7 @@ class FeedFragment : Fragment() {
                     Snackbar.LENGTH_LONG)
                     .setAction("Загрузить") {
                         viewModel.makeVisible()
+
                         binding.list.smoothScrollToPosition(0)
                     }
 
@@ -91,7 +95,7 @@ class FeedFragment : Fragment() {
             }
         }
 
-        binding.swiperefresh.setOnClickListener {
+        binding.swiperefresh.setOnRefreshListener {
             viewModel.refreshPosts()
         }
 
