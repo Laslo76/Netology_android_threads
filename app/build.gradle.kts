@@ -79,4 +79,6 @@ dependencies {
 
     implementation(libs.androidx.swiperefreshlayout)
 
+    implementation("com.github.dhaval2404:imagepicker:2.1")
+    implementation(libs.ucrop)
 }

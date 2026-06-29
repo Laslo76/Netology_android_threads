@@ -7,13 +7,20 @@
     android:layout_height="wrap_content"
     >
 
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="@dimen/common_spacing">
+        android:paddingTop="@dimen/common_spacing">
 
         <ImageView
             android:id="@+id/avatar"
+            android:paddingLeft="8dp"
             android:layout_width="@dimen/posts_avatar_size"
             android:layout_height="@dimen/posts_avatar_size"
             android:layout_marginBottom="@dimen/common_spacing"
@@ -72,23 +79,35 @@
 
         <TextView
             android:id="@+id/content"
+            android:padding="8dp"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:autoLink="web"
             android:lineSpacingMultiplier="1.5"
-            android:paddingTop="@dimen/common_spacing"
             android:paddingBottom="@dimen/common_spacing"
+            android:paddingTop="@dimen/common_spacing"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/header"
             tools:text="@sample/posts.json/data/content" />
+
+        <ImageView
+            android:id="@+id/media"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/image_preview"
+            app:layout_constraintTop_toBottomOf="@+id/content"
+            tools:layout_editor_absoluteX="16dp"
+            tools:src="@tools:sample/avatars" />
 
         <androidx.constraintlayout.widget.Barrier
             android:id="@+id/footer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:barrierDirection="bottom"
-            app:constraint_referenced_ids="content" />
+            app:constraint_referenced_ids="media" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/like"
@@ -115,5 +134,7 @@
             app:icon="@drawable/ic_share_24"
             style="@style/Widget.AppTheme.IconButton"
             />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
 </com.google.android.material.card.MaterialCardView>

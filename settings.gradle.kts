@@ -10,6 +10,8 @@ pluginManagement {
         // Добавляем репозитории Huawei
         maven("https://developer.huawei.com/repo/") // Основной репозиторий с библиотеками
         maven("https://repo.huaweimobileservices.com/") // Важен для Gradle-плагинов
+
+
     }
 }
 dependencyResolutionManagement {
@@ -26,6 +28,8 @@ dependencyResolutionManagement {
         maven("https://mirrors.huaweicloud.com/repository/maven/")
         maven("https://developer.huawei.com/repo/")
         maven("https://repo.huaweimobileservices.com/")
+        // add ImagePicker
+        maven("https://jitpack.io")
     }
 
 }

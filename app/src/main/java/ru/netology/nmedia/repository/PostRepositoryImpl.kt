@@ -5,16 +5,24 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import okio.IOException
+import retrofit2.http.Multipart
 import ru.netology.nmedia.api.*
 import ru.netology.nmedia.dao.PostDao
+import ru.netology.nmedia.dto.Attachment
+import ru.netology.nmedia.dto.Media
+import ru.netology.nmedia.dto.MediaUpload
 import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.entity.PostEntity
 import ru.netology.nmedia.entity.toEntity
+import ru.netology.nmedia.enumeration.AttachmentType
 import ru.netology.nmedia.error.ApiError
 import ru.netology.nmedia.error.AppError
 import ru.netology.nmedia.error.NetworkError
 import ru.netology.nmedia.error.UnknownError
+import java.io.File
 
 class PostRepositoryImpl(private val dao: PostDao): PostRepository {
     override val data = dao.getAll().map { it.map { it.toDto()}}
@@ -49,7 +57,6 @@ class PostRepositoryImpl(private val dao: PostDao): PostRepository {
     }
 
     override suspend fun makeVisible()   {
-
             dao.updateVisible()
     }
 
@@ -70,13 +77,23 @@ class PostRepositoryImpl(private val dao: PostDao): PostRepository {
         }
     }
 
-    override suspend fun save(post: Post) {
+    override suspend fun save(
+        post: Post,
+        file: File?
+    ) {
         try {
-            val response = PostApi.service.save(post)
+            val postWithAttachment =
+            file?.let {
+                Attachment(upload(MediaUpload(it)).id, AttachmentType.IMAGE)
+            }
+                ?.let {
+                    post.copy(attachment = it)
+                }
+                ?: post
+            val response = PostApi.service.save(postWithAttachment)
             if (!response.isSuccessful) {
                 throw ApiError(response.code(), response.message())
             }
-
             val body = response.body() ?: throw ApiError(response.code(), response.message())
             dao.insert(PostEntity.fromDto(body))
         } catch (e: IOException) {
@@ -85,6 +102,27 @@ class PostRepositoryImpl(private val dao: PostDao): PostRepository {
             throw UnknownError
         }
     }
+
+    override suspend fun upload(upload: MediaUpload): Media {
+        try {
+            val media = MultipartBody.Part.createFormData(
+                "file", upload.file.name, upload.file.asRequestBody()
+            )
+
+            val response = PostApi.service.saveMedia(media)
+            if (!response.isSuccessful) {
+                throw ApiError(response.code(), response.message())
+            }
+
+            return response.body() ?: throw ApiError(response.code(), response.message())
+        } catch (e: java.io.IOException) {
+            throw NetworkError
+        } catch (e: Exception) {
+            throw UnknownError
+        }
+    }
+
+
 
     override suspend fun removeById(id: Long) {
         val postToRestore = dao.getById(id) ?: throw Exception("Post not found in DB")

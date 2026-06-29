@@ -4,6 +4,8 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import com.bumptech.glide.Glide
 import android.widget.PopupMenu
+import androidx.core.view.isGone
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -18,6 +20,8 @@ interface OnInteractionListener {
     fun onEdit(post: Post) {}
     fun onRemove(post: Post) {}
     fun onShare(post: Post) {}
+
+    fun onViewImage(post: Post) {}
 }
 
 class PostsAdapter(
@@ -59,6 +63,20 @@ class PostViewHolder(
                 .transform(RoundedCorners(radiusInPx))
                 .into(binding.avatar)
 
+            if (post.attachment == null) {
+                binding.media.isGone = true
+            } else {
+                val urlMedia = "http://10.0.2.2:9999/media/${post.attachment.url}"
+                Glide.with(binding.media)
+                    .load(urlMedia)
+                    .placeholder(R.drawable.ic_loading_100dp)
+                    .error(R.drawable.ic_error_100dp)
+                    .timeout(10_000)
+                    .transform(RoundedCorners(radiusInPx))
+                    .into(binding.media)
+
+            }
+
             menu.setOnClickListener {
                 PopupMenu(it.context, it).apply {
                     inflate(R.menu.options_post)
@@ -86,6 +104,10 @@ class PostViewHolder(
 
             share.setOnClickListener {
                 onInteractionListener.onShare(post)
+            }
+
+            media.setOnClickListener {
+                onInteractionListener.onViewImage(post)
             }
         }
     }

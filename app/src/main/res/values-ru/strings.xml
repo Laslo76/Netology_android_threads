@@ -22,4 +22,5 @@
     <string name="channel_remote_name">Уведомления с сервера</string>
     <string name="channel_remote_description">Уведомления с удалённого сервера</string>
     <string name="goUp">Показать</string>
+    <string name="mediaFullScreen">Картинка на весь экран</string>
 </resources>

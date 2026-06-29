@@ -29,6 +29,17 @@ class FeedFragment : Fragment() {
         val binding = FragmentFeedBinding.inflate(inflater, container, false)
 
         val adapter = PostsAdapter(object : OnInteractionListener {
+            override fun onViewImage(post: Post) {
+                val imageLink = "http://10.0.2.2:9999/media/${post.attachment?.url}"
+                val bundle = Bundle().apply {
+                    putString("imageUrl", imageLink)
+                }
+                findNavController().navigate(
+                    R.id.action_feedFragment_to_fragmentMedia, // ID вашего действия в nav_graph
+                    bundle // Передаем созданный нами пакет данных
+                )
+            }
+
             override fun onEdit(post: Post) {
                 viewModel.startEdit(post)
                 findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
@@ -71,7 +82,7 @@ class FeedFragment : Fragment() {
         viewModel.data.observe(viewLifecycleOwner) { state ->
             adapter.submitList(state.posts)
             binding.emptyText.isVisible = state.empty
-            
+
         }
 
         viewModel.newerCount.observe(viewLifecycleOwner) { count ->
